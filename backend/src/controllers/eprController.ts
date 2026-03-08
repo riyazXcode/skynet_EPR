@@ -1,197 +1,198 @@
 import { Request, Response } from "express"
 import {
- fetchEprsByPerson,
- fetchEprById,
- insertEpr,
- patchEpr,
- fetchEprSummary,
+    fetchEprsByPerson,
+    fetchEprById,
+    insertEpr,
+    patchEpr,
+    fetchEprSummary,
 } from "../services/eprService"
 
 export const listEprs = async (req: Request, res: Response) => {
 
- try {
+    try {
 
-  const { personId } = req.query
+        const { personId } = req.query
+        if (req.user?.role === "student" && req.user.id !== req.body.personId) {
+            return res.status(403).json({ error: "Students can only view their own EPRs" })
+        }
+        if (!personId) {
+            return res.status(400).json({
+                error: "personId is required"
+            })
+        }
 
-  if (!personId) {
-   return res.status(400).json({
-    error: "personId is required"
-   })
-  }
+        const records = await fetchEprsByPerson(personId as string)
 
-  const records = await fetchEprsByPerson(personId as string)
+        res.json({
+            success: true,
+            data: records
+        })
 
-  res.json({
-   success: true,
-   data: records
-  })
+    } catch (err) {
 
- } catch (err) {
+        res.status(500).json({
+            success: false,
+            error: "Failed to fetch EPRs"
+        })
 
-  res.status(500).json({
-   success: false,
-   error: "Failed to fetch EPRs"
-  })
-
- }
+    }
 }
 
 export const getEpr = async (req: Request, res: Response) => {
 
- try {
+    try {
 
-  const { id } = req.params
+        const { id } = req.params
 
-  const record = await fetchEprById(id as string)
+        const record = await fetchEprById(id as string)
 
-  res.json({
-   success: true,
-   data: record
-  })
+        res.json({
+            success: true,
+            data: record
+        })
 
- } catch {
+    } catch {
 
-  res.status(500).json({
-   success: false,
-   error: "Failed to fetch EPR"
-  })
+        res.status(500).json({
+            success: false,
+            error: "Failed to fetch EPR"
+        })
 
- }
+    }
 }
 
 export const createEprRecord = async (req: Request, res: Response) => {
 
- try {
+    try {
 
-  const data = req.body
+        const data = req.body
+        if (data.overallRating < 1 || data.overallRating > 5) {
+            return res.status(400).json({
+                error: "Rating must be between 1 and 5"
+            })
+        }
 
-  if (data.overallRating < 1 || data.overallRating > 5) {
-   return res.status(400).json({
-    error: "Rating must be between 1 and 5"
-   })
-  }
+        if (data.periodEnd < data.periodStart) {
+            return res.status(400).json({
+                error: "Invalid period range"
+            })
+        }
 
-  if (data.periodEnd < data.periodStart) {
-   return res.status(400).json({
-    error: "Invalid period range"
-   })
-  }
+        const newRecord = await insertEpr(data)
 
-  const newRecord = await insertEpr(data)
+        res.json({
+            success: true,
+            data: newRecord
+        })
 
-  res.json({
-   success: true,
-   data: newRecord
-  })
+    } catch {
 
- } catch {
+        res.status(500).json({
+            success: false,
+            error: "Failed to create EPR"
+        })
 
-  res.status(500).json({
-   success: false,
-   error: "Failed to create EPR"
-  })
-
- }
+    }
 }
 
 export const updateEprRecord = async (req: Request, res: Response) => {
 
- try {
+    try {
 
-  const { id } = req.params
+        const { id } = req.params
 
-  const updated = await patchEpr(id as string, req.body)
+        const updated = await patchEpr(id as string, req.body)
 
-  res.json({
-   success: true,
-   data: updated
-  })
+        res.json({
+            success: true,
+            data: updated
+        })
 
- } catch {
+    } catch {
 
-  res.status(500).json({
-   success: false,
-   error: "Failed to update EPR"
-  })
+        res.status(500).json({
+            success: false,
+            error: "Failed to update EPR"
+        })
 
- }
+    }
 }
 
 
 export const getEprSummary = async (req: Request, res: Response) => {
 
- try {
+    try {
 
-  const { personId } = req.params
+        const { personId } = req.params
 
-  const summary = await fetchEprSummary(personId as string)
+        const summary = await fetchEprSummary(personId as string)
 
-  res.json({
-   success: true,
-   data: summary
-  })
+        res.json({
+            success: true,
+            data: summary
+        })
 
- } catch (error) {
+    } catch (error) {
 
-  res.status(500).json({
-   success: false,
-   error: "Failed to generate summary"
-  })
+        res.status(500).json({
+            success: false,
+            error: "Failed to generate summary"
+        })
 
- }
+    }
 
 }
 
 
 export const generateEprRemarks = async (req: Request, res: Response) => {
 
- try {
+    try {
 
-  const {
-   overallRating,
-   technicalSkillsRating,
-   nonTechnicalSkillsRating
-  } = req.body
+        const {
+            overallRating,
+            technicalSkillsRating,
+            nonTechnicalSkillsRating
+        } = req.body
 
-  const avg =
-   (overallRating + technicalSkillsRating + nonTechnicalSkillsRating) / 3
+        const avg =
+            (overallRating + technicalSkillsRating + nonTechnicalSkillsRating) / 3
 
-  let remark = ""
+        let remark = ""
 
-  if (avg >= 4.5) {
-   remark =
-    "The student demonstrates excellent technical proficiency, strong situational awareness, and disciplined cockpit procedures."
-  }
+        if (avg >= 4.5) {
+            remark =
+                "The student demonstrates excellent technical proficiency, strong situational awareness, and disciplined cockpit procedures."
+        }
 
-  else if (avg >= 3.5) {
-   remark =
-    "The student shows solid technical fundamentals and consistent progress but should continue refining communication and checklist discipline."
-  }
+        else if (avg >= 3.5) {
+            remark =
+                "The student shows solid technical fundamentals and consistent progress but should continue refining communication and checklist discipline."
+        }
 
-  else if (avg >= 2.5) {
-   remark =
-    "The student demonstrates developing skills but requires additional practice to improve technical accuracy and cockpit coordination."
-  }
+        else if (avg >= 2.5) {
+            remark =
+                "The student demonstrates developing skills but requires additional practice to improve technical accuracy and cockpit coordination."
+        }
 
-  else {
-   remark =
-    "The student requires focused improvement in both technical proficiency and non-technical skills such as communication and situational awareness."
-  }
+        else {
+            remark =
+                "The student requires focused improvement in both technical proficiency and non-technical skills such as communication and situational awareness."
+        }
 
-  res.json({
-   success: true,
-   data: {
-    suggestedRemarks: remark
-   }
-  })
+        res.json({
+            success: true,
+            data: {
+                suggestedRemarks: remark
+            }
+        })
 
- } catch {
+    } catch {
 
-  res.status(500).json({
-   success: false,
-   error: "Failed to generate AI remarks"
-  })
+        res.status(500).json({
+            success: false,
+            error: "Failed to generate AI remarks"
+        })
 
- }
+    }
 
 }

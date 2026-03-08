@@ -7,6 +7,8 @@ import {
  getEprSummary,
  generateEprRemarks
 } from "../controllers/eprController"
+import { mockAuth, requireRole } from "../middleware/authMiddleware"
+
 
 const router = Router()
 
@@ -14,11 +16,20 @@ router.post("/assist", generateEprRemarks)
 
 router.get("/summary/:personId", getEprSummary)
 
-router.get("/", listEprs)
+router.get(
+ "/",
+ mockAuth,
+ listEprs
+)
 
 router.get("/:id", getEpr)
 
-router.post("/", createEprRecord)
+router.post(
+ "/",
+ mockAuth,
+ requireRole(["instructor","admin"]),
+ createEprRecord
+)
 
 router.patch("/:id", updateEprRecord)
 
