@@ -1,4 +1,5 @@
 import db from "../db/knex"
+import { v4 as uuid } from "uuid"
 
 export const fetchEprsByPerson = async (personId: string) => {
 
@@ -20,6 +21,7 @@ export const insertEpr = async (data: any) => {
 
  const result = await db("epr_records")
   .insert({
+   id: uuid(),
    person_id: data.personId,
    evaluator_id: data.evaluatorId,
    role_type: data.roleType,

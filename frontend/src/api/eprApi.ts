@@ -17,11 +17,8 @@ export const getEpr = async (id: string) => {
 }
 
 export const createEpr = async (data: any) => {
-
  const res = await apiClient.post("/api/epr", data)
-
- return res.data.data
-
+ return res.data
 }
 
 export const updateEpr = async (id: string, data: any) => {

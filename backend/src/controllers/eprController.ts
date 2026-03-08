@@ -11,6 +11,8 @@ import { validateRating } from "../utils/validation"
 const hasInvalidRating = (rating: unknown) => {
     return typeof rating !== "number" || !validateRating(rating)
 }
+const validRoleTypes = ["student", "instructor"]
+const validStatuses = ["draft", "submitted", "archived"]
 
 export const listEprs = async (req: Request, res: Response) => {
 
@@ -77,6 +79,27 @@ export const createEprRecord = async (req: Request, res: Response) => {
     try {
 
         const data = req.body
+        if (!data.personId || !data.evaluatorId || !data.periodStart || !data.periodEnd) {
+            return res.status(400).json({
+                success: false,
+                error: "personId, evaluatorId, periodStart and periodEnd are required"
+            })
+        }
+
+        if (!validRoleTypes.includes(data.roleType)) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid roleType"
+            })
+        }
+
+        if (!validStatuses.includes(data.status)) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid status"
+            })
+        }
+
         const ratings = [
             data.overallRating,
             data.technicalSkillsRating,
@@ -103,11 +126,11 @@ export const createEprRecord = async (req: Request, res: Response) => {
             data: newRecord
         })
 
-    } catch {
+    } catch (error: any) {
 
         res.status(500).json({
             success: false,
-            error: "Failed to create EPR"
+            error: error?.message || "Failed to create EPR"
         })
 
     }
