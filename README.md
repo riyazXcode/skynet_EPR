@@ -125,12 +125,29 @@ Frontend URL: `http://localhost:5173`
 - Summary: `GET /api/epr/summary/:personId`
 - AI Assist: `POST /api/epr/assist`
 
-## How I Used AI in This Project
+## How I Used AI in This Project (Completely Hand Written Section, No AI!)
 
-AI tools were used for:
-- scaffolding boilerplate structures
-- drafting SQL/query patterns
-- accelerating UI iteration ideas
-- generating and refining documentation text
+### For Backend
+- First of all, for starting with this project. I needed ChatGPT and Codex. I used ChatGPT for designing architecture and brainstorming with contstains and ideas.
+- Once the whole architecture is set, after making necessary changes. I lock the design and start working on backend first. And also get a postman collection json from the ChatGPT for all the APIs we going to work with.
+- Starting with spreading the basic boilerplate and then making necessary changes.
+- I repeat the cycle during development of APIs:
+- 1) I start a feature.
+- 2) Go through the given code for that feature one by one. And paste it in the editor.
+- 3) Make sure it works. if it doesn't I try to figure out which line is responsible for the error. If I find it, I fix it. If I can't then, I ask codex to analyse that line or the whole context responsible. It provides a solution. I fix it.
+- 4) Check the endpoint working in postman and make sure it works and handles edge cases properly.
+- 5) Rinse and repeat for the backend till. Every API is done and tested.
 
-All AI-assisted code was manually reviewed, adjusted, and validated with local runs/build checks.
+### For Frontend
+- After all the backend is completed, I get the architecture context message from ChatGPT and paste it to the codex context which is present in my ide.
+- I make it analyse it once again.
+- I ask ChatGPT to give me the implementation notes for frontend. And start with the boilerplate.
+- 1) Similarly, I implement feature by feature. 
+- 2) First I make sure the UI is capable of providing the core functionality. Don't bother about UI attractiveness.
+- 3) After every feature is over, I ask codex to analyse the whole context and provide me with the clean and good UI.
+- Wind up
+
+### Finallyy
+- Just randomly go play with the project to check usability. If something feels wrong. I solve it using codex.
+- This is how I completed this task under 13 Hours (Morning: 8:00 AM to 9:00 PM)
+
