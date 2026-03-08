@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { createEpr } from "../../api/eprApi"
+import { generateAiRemark } from "../../api/eprApi"
 
 interface Props {
     personId: string
@@ -56,7 +57,20 @@ export default function EprForm({ personId, evaluatorId, onClose }: Props) {
             setSaving(false)
         }
     }
+    const handleAiAssist = async () => {
 
+        const result = await generateAiRemark({
+            overallRating: form.overallRating,
+            technicalSkillsRating: form.technicalSkillsRating,
+            nonTechnicalSkillsRating: form.nonTechnicalSkillsRating
+        })
+
+        setForm({
+            ...form,
+            remarks: result.suggestedRemarks
+        })
+
+    }
     return (
 
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
@@ -144,7 +158,20 @@ export default function EprForm({ personId, evaluatorId, onClose }: Props) {
                     </div>
 
                     <div>
-                        Remarks
+
+                        <div className="flex justify-between mb-1">
+
+                            <span>Remarks</span>
+
+                            <button
+                                onClick={handleAiAssist}
+                                className="text-sm text-blue-600"
+                            >
+                                Generate Suggestion
+                            </button>
+
+                        </div>
+
                         <textarea
                             className="border w-full p-2"
                             value={form.remarks}
@@ -152,6 +179,7 @@ export default function EprForm({ personId, evaluatorId, onClose }: Props) {
                                 setForm({ ...form, remarks: e.target.value })
                             }
                         />
+
                     </div>
 
                     <div>
