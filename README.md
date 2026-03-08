@@ -1,46 +1,78 @@
-# Skynet EPR - AIRMAN Technical Assessment
+﻿# Skynet EPR - AIRMAN Technical Assessment
 
-A full-stack mini EPR (Electronic Progress & Performance Record) system for flight training organizations.
+Mini full-stack EPR (Electronic Progress & Performance Record) application for flight training workflows.
 
-## Stack
-- Backend: Node.js, Express, TypeScript, Knex, PostgreSQL
+## Tech Stack
+- Backend: Node.js, Express, TypeScript, PostgreSQL, Knex
 - Frontend: React, TypeScript, Vite, Tailwind CSS, Axios
 
-## Implemented Scope
+## What Is Implemented
 
-### Level 1 (Core)
-- People directory (`/api/people`) with:
-  - role filter (`student`/`instructor`)
-  - search by name/email
-  - student metadata: course + enrollment status
-  - instructor metadata: total EPRs written
+### Level 1 (Core) - Implemented
+- Data model + migrations for:
+  - `users`
+  - `courses`
+  - `enrollments`
+  - `epr_records`
+- Seed data for instructors, students, courses, enrollments, EPR records
+- Directory API:
+  - `GET /api/people`
+  - query params: `role`, `search`
 - EPR APIs:
-  - list (`/api/epr?personId=...` or `/api/epr?evaluatorId=...`)
-  - detail (`/api/epr/:id`)
-  - create (`POST /api/epr`)
-  - update (`PATCH /api/epr/:id`)
-- Validation:
-  - ratings constrained to 1-5
+  - `GET /api/epr?personId=...`
+  - `GET /api/epr/:id`
+  - `POST /api/epr`
+  - `PATCH /api/epr/:id`
+- Core validation:
+  - ratings in range `1-5`
   - `periodEnd >= periodStart`
-- Frontend screens:
-  - directory with search/filter
-  - EPR list/detail modal
-  - create new EPR form
+- Frontend:
+  - People directory
+  - Person detail panel
+  - EPR list
+  - EPR detail modal + edit
+  - New EPR modal
 
-### Level 2 (Implemented)
-- Progress summary (`GET /api/epr/summary/:personId`)
-- Instructor/Student/Admin role behavior (mock header-based access checks)
-- AI assist stub (`POST /api/epr/assist`)
+### Level 2 (Options) - Implemented
+- Option A (Progress Summary & Analytics):
+  - `GET /api/epr/summary/:personId`
+  - frontend Performance Summary card
+- Option B (Mini Role-Based UX):
+  - demo session picker (`student` / `instructor` / `admin`)
+  - role-based frontend behavior
+  - backend role checks using mock headers
+- Option C (AI Assist Stub):
+  - `POST /api/epr/assist`
+  - Generate Suggestion in create/edit EPR forms
 
-## Backend Setup
+## How To Run
 
-1. Install deps:
+### 1) Install Dependencies
+
+Backend:
 ```bash
 cd backend
 npm install
+# or
+pnpm install
 ```
 
-2. Create `.env`:
+Frontend:
+```bash
+cd frontend
+npm install
+# or
+pnpm install
+```
+
+### 2) Database Setup
+
+Create PostgreSQL database:
+```sql
+CREATE DATABASE skynet_epr;
+```
+
+Create backend env file: `backend/.env`
 ```env
 PORT=5000
 DB_HOST=localhost
@@ -49,64 +81,56 @@ DB_PASSWORD=yourpassword
 DB_NAME=skynet_epr
 ```
 
-3. Create database:
-```sql
-CREATE DATABASE skynet_epr;
+### 3) Run Migrations
+
+```bash
+cd backend
+npx knex migrate:latest
 ```
 
-4. Run migrations and seeds:
+### 4) Seed Data
+
 ```bash
-npx knex migrate:latest
+cd backend
 npx knex seed:run
 ```
 
-5. Start backend:
+### 5) Start Backend
+
 ```bash
-npm start
+cd backend
+npm run dev
+# or
+pnpm dev
 ```
 
-Backend runs on `http://localhost:5000`.
+Backend URL: `http://localhost:5000`
 
-## Frontend Setup
+### 6) Start Frontend
 
-1. Install deps:
 ```bash
 cd frontend
-npm install
-```
-
-2. Start app:
-```bash
 npm run dev
+# or
+pnpm dev
 ```
 
-Frontend runs on `http://localhost:5173`.
+Frontend URL: `http://localhost:5173`
 
-## API Quick Reference
+## API Overview
 
-### People
-- `GET /api/people`
-- Query params:
-  - `role=student|instructor`
-  - `search=<name-or-email-substring>`
+- People Directory: `GET /api/people`
+- EPR List/Detail: `GET /api/epr`, `GET /api/epr/:id`
+- EPR Create/Update: `POST /api/epr`, `PATCH /api/epr/:id`
+- Summary: `GET /api/epr/summary/:personId`
+- AI Assist: `POST /api/epr/assist`
 
-### EPR
-- `GET /api/epr?personId=<uuid>`
-- `GET /api/epr?evaluatorId=<uuid>`
-- `GET /api/epr/:id`
-- `POST /api/epr`
-- `PATCH /api/epr/:id`
+## How I Used AI in This Project
 
-### Summary
-- `GET /api/epr/summary/:personId`
+AI tools were used for:
+- scaffolding boilerplate structures
+- drafting SQL/query patterns
+- accelerating UI iteration ideas
+- generating and refining documentation text
 
-### AI Assist
-- `POST /api/epr/assist`
-
-## Current UX Notes
-- People search/filter is API-driven from the frontend (`/api/people` query params are used directly).
-- Loading indicators are shown while directory/EPR data is loading.
-- Success/error toast notifications are shown for create/update EPR actions.
-
-## AI Usage
-AI tools were used for scaffolding and iteration support. All generated code was reviewed and adjusted manually.
+All AI-assisted code was manually reviewed, adjusted, and validated with local runs/build checks.
