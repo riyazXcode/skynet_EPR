@@ -4,6 +4,8 @@ import PeopleList from "../components/people/PeopleList"
 import { type Person } from "../types/people"
 import { useEprs } from "../hooks/useEprs"
 import EprList from "../components/epr/EprList"
+import EprDetailModal from "../components/epr/EprDetailModal"
+import { type EprRecord } from "../types/epr"
 
 
 export default function DirectoryPage() {
@@ -11,6 +13,7 @@ export default function DirectoryPage() {
     const [selectedPerson, setSelectedPerson] = useState<Person | null>(null)
     const { people, loading } = usePeople()
     const { records, loading: eprLoading } = useEprs(selectedPerson?.id)
+    const [selectedEpr, setSelectedEpr] = useState<EprRecord | null>(null)
 
     if (loading) {
         return <div>Loading people...</div>
@@ -51,10 +54,18 @@ export default function DirectoryPage() {
                             Performance Records
                         </h3>
 
-                        {eprLoading && <div>Loading records...</div>}
+                        {selectedEpr && (
+                            <EprDetailModal
+                                record={selectedEpr}
+                                onClose={() => setSelectedEpr(null)}
+                            />
+                        )}
 
                         {!eprLoading && (
-                            <EprList records={records} />
+                            <EprList
+                                records={records}
+                                onSelect={setSelectedEpr}
+                            />
                         )}
 
                     </div>

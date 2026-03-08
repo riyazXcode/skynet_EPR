@@ -3,9 +3,10 @@ import EprCard from "./EprCard"
 
 interface Props {
  records: EprRecord[]
+ onSelect: (r: EprRecord) => void
 }
 
-export default function EprList({ records }: Props) {
+export default function EprList({ records, onSelect }: Props) {
 
  if (!records.length) {
   return <div>No records found</div>
@@ -16,11 +17,14 @@ export default function EprList({ records }: Props) {
   <div className="space-y-3">
 
    {records.map(r => (
-    <EprCard key={r.id} record={r} />
+    <EprCard
+     key={r.id}
+     record={r}
+     onSelect={onSelect}
+    />
    ))}
 
   </div>
 
  )
-
 }
