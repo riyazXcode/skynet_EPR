@@ -7,6 +7,7 @@ interface Props {
  record: EprRecord
  onClose: () => void
  onUpdated?: () => void
+ readOnly?: boolean
 }
 
 const formatDate = (value: string) => {
@@ -20,7 +21,7 @@ const formatDate = (value: string) => {
  return `${dd}-${mm}-${yyyy}`
 }
 
-export default function EprDetailModal({ record, onClose, onUpdated }: Props) {
+export default function EprDetailModal({ record, onClose, onUpdated, readOnly = false }: Props) {
  const [isEditing, setIsEditing] = useState(false)
  const [saving, setSaving] = useState(false)
  const [form, setForm] = useState<EprRecord>({ ...record })
@@ -155,7 +156,7 @@ export default function EprDetailModal({ record, onClose, onUpdated }: Props) {
     </div>
 
     <div className="mt-6 flex justify-end gap-2">
-     {!isEditing && (
+     {!isEditing && !readOnly && (
       <button onClick={() => setIsEditing(true)} className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100">
        Edit
       </button>

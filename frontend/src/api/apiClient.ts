@@ -1,14 +1,20 @@
 import axios from "axios"
-
-const currentUserId = (import.meta.env?.VITE_USER_ID as string) || "079978da-bedb-46c0-93d4-ed0f5d5be558"
-const currentUserRole = (import.meta.env?.VITE_USER_ROLE as string) || "instructor"
+import { getDemoSession } from "../utils/demoSession"
 
 const apiClient = axios.create({
-    baseURL: "http://localhost:5000",
-    headers: {
-        "x-user-id": currentUserId,
-        "x-user-role": currentUserRole
-    }
+ baseURL: "http://localhost:5000"
+})
+
+apiClient.interceptors.request.use((config) => {
+ const session = getDemoSession()
+
+ if (session) {
+  config.headers = config.headers || {}
+  config.headers["x-user-id"] = session.id
+  config.headers["x-user-role"] = session.role
+ }
+
+ return config
 })
 
 export default apiClient

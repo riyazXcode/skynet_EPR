@@ -12,6 +12,7 @@ export async function seed(knex: Knex) {
   const instructor1 = uuid()
   const instructor2 = uuid()
   const instructor3 = uuid()
+  const admin1 = uuid()
 
   // students
   const students = Array.from({ length: 8 }, () => uuid())
@@ -21,6 +22,7 @@ export async function seed(knex: Knex) {
   const cplCourse = uuid()
 
   await knex("users").insert([
+    { id: admin1, name: "Capt. Pete Mitchell", email: "admin@academy.com", role: "admin" },
     { id: instructor1, name: "Capt. John Walker", email: "john.walker@academy.com", role: "instructor" },
     { id: instructor2, name: "Capt. Sarah Collins", email: "sarah.collins@academy.com", role: "instructor" },
     { id: instructor3, name: "Capt. Michael Reed", email: "michael.reed@academy.com", role: "instructor" },
