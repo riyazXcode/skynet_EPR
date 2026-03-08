@@ -6,6 +6,7 @@ import {
     patchEpr,
     fetchEprSummary,
 } from "../services/eprService"
+import { validateRating } from "../utils/validation"
 
 export const listEprs = async (req: Request, res: Response) => {
 
@@ -187,7 +188,12 @@ export const generateEprRemarks = async (req: Request, res: Response) => {
         })
 
     } catch {
-
+        if (!validateRating(req.body.overallRating)) {
+            return res.status(400).json({
+                success: false,
+                error: "Rating must be between 1 and 5"
+            })
+        }
         res.status(500).json({
             success: false,
             error: "Failed to generate AI remarks"
