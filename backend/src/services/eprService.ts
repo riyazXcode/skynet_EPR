@@ -1,6 +1,17 @@
 import db from "../db/knex"
 import { v4 as uuid } from "uuid"
 
+const formatDateLabel = (value: unknown) => {
+ const date = value instanceof Date ? value : new Date(String(value))
+ if (Number.isNaN(date.getTime())) return String(value)
+
+ const dd = String(date.getDate()).padStart(2, "0")
+ const mm = String(date.getMonth() + 1).padStart(2, "0")
+ const yyyy = date.getFullYear()
+
+ return `${dd}-${mm}-${yyyy}`
+}
+
 export const fetchEprsByPerson = async (personId: string) => {
 
  return db("epr_records")
@@ -64,10 +75,10 @@ export const fetchEprSummary = async (personId: string) => {
  const aggregates = await db("epr_records")
   .where("person_id", personId)
   .select(
-    db.raw("ROUND(AVG(overall_rating), 2) as averageOverallRating"),
-    db.raw("ROUND(AVG(technical_skills_rating), 2) as averageTechnicalRating"),
-    db.raw("ROUND(AVG(non_technical_skills_rating), 2) as averageNonTechnicalRating"),
-    db.raw("COUNT(id) as eprCount")
+   db.raw('COALESCE(ROUND(AVG(overall_rating), 2), 0)::float as "averageOverallRating"'),
+   db.raw('COALESCE(ROUND(AVG(technical_skills_rating), 2), 0)::float as "averageTechnicalRating"'),
+   db.raw('COALESCE(ROUND(AVG(non_technical_skills_rating), 2), 0)::float as "averageNonTechnicalRating"'),
+   db.raw('COUNT(id)::int as "eprCount"')
   )
   .first()
 
@@ -78,14 +89,17 @@ export const fetchEprSummary = async (personId: string) => {
   .select(
    db.raw("period_start"),
    db.raw("period_end"),
-   db.raw("overall_rating as overallRating")
+   db.raw('overall_rating as "overallRating"')
   )
 
  return {
-  ...aggregates,
+  averageOverallRating: Number(aggregates?.averageOverallRating ?? 0),
+  averageTechnicalRating: Number(aggregates?.averageTechnicalRating ?? 0),
+  averageNonTechnicalRating: Number(aggregates?.averageNonTechnicalRating ?? 0),
+  eprCount: Number(aggregates?.eprCount ?? 0),
   lastThreePeriods: lastThree.map(r => ({
-   periodLabel: `${r.period_start} -> ${r.period_end}`,
-   overallRating: r.overallRating
+   periodLabel: `${formatDateLabel(r.period_start)} to ${formatDateLabel(r.period_end)}`,
+   overallRating: Number(r.overallRating ?? r.overallrating ?? 0)
   }))
  }
 

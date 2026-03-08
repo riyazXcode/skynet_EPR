@@ -7,7 +7,8 @@ import EprList from "../components/epr/EprList"
 import EprDetailModal from "../components/epr/EprDetailModal"
 import { type EprRecord } from "../types/epr"
 import EprForm from "../components/epr/EprForm"
-
+import { useSummary } from "../hooks/useSummary"
+import PerformanceSummary from "../components/analytics/PerformanceSummary"
 
 export default function DirectoryPage() {
 
@@ -17,6 +18,7 @@ export default function DirectoryPage() {
     const [selectedEpr, setSelectedEpr] = useState<EprRecord | null>(null)
     const [showCreate, setShowCreate] = useState(false)
     const defaultEvaluatorId = people.find((p) => p.role === "instructor")?.id || ""
+    const summary = useSummary(selectedPerson?.id)
 
     if (loading) {
         return <div>Loading people...</div>
@@ -41,10 +43,10 @@ export default function DirectoryPage() {
             </div>
 
             <div className="col-span-2 p-6">
+
                 {selectedPerson && (
-
+                    
                     <div>
-
                         <h2 className="text-xl font-bold">
                             {selectedPerson.name}
                         </h2>
@@ -58,19 +60,22 @@ export default function DirectoryPage() {
                         >
                             New EPR
                         </button>
-
+                        {summary && (
+                            <PerformanceSummary summary={summary} />
+                        )}
                         <h3 className="font-semibold mb-3">
                             Performance Records
                         </h3>
-
+                        
                         {selectedEpr && (
                             <EprDetailModal
                                 record={selectedEpr}
                                 onClose={() => setSelectedEpr(null)}
                             />
                         )}
-
+                        
                         {!eprLoading && (
+
                             <EprList
                                 records={records}
                                 onSelect={setSelectedEpr}
