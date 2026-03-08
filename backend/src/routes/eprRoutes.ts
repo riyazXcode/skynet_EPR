@@ -14,14 +14,15 @@ const router = Router()
 
 router.post("/assist", generateEprRemarks)
 
-router.get("/summary/:personId", getEprSummary)
+router.get("/summary/:personId", mockAuth, getEprSummary)
 
 router.get(
     "/",
+    mockAuth,
     listEprs
 )
 
-router.get("/:id", getEpr)
+router.get("/:id", mockAuth, getEpr)
 
 router.post(
     "/",
@@ -30,6 +31,6 @@ router.post(
     createEprRecord
 )
 
-router.patch("/:id", updateEprRecord)
+router.patch("/:id", mockAuth, updateEprRecord)
 
 export default router

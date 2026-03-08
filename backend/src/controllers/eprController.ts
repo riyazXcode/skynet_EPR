@@ -1,7 +1,11 @@
 import { Request, Response } from "express"
 import {
     fetchEprsByPerson,
+    fetchEprsByEvaluator,
+    fetchEprsByPersonForEvaluator,
+    hasEprsByPersonForEvaluator,
     fetchEprById,
+    fetchUserById,
     insertEpr,
     patchEpr,
     fetchEprSummary,
@@ -18,17 +22,48 @@ export const listEprs = async (req: Request, res: Response) => {
 
     try {
 
-        const { personId } = req.query
-        if (req.user?.role === "student" && req.user.id !== personId) {
-            return res.status(403).json({ error: "Students can only view their own EPRs" })
-        }
-        if (!personId) {
+        const { personId, evaluatorId } = req.query
+        const currentUserId = req.user?.id
+        const currentRole = req.user?.role
+
+        if (!personId && !evaluatorId) {
             return res.status(400).json({
-                error: "personId is required"
+                error: "personId or evaluatorId is required"
             })
         }
 
-        const records = await fetchEprsByPerson(personId as string)
+        let records = []
+
+        if (currentRole === "admin") {
+            records = personId
+                ? await fetchEprsByPerson(personId as string)
+                : await fetchEprsByEvaluator(evaluatorId as string)
+        } else if (currentRole === "instructor") {
+            if (evaluatorId && evaluatorId !== currentUserId) {
+                return res.status(403).json({
+                    success: false,
+                    error: "Instructors can only view records they evaluated"
+                })
+            }
+
+            records = personId
+                ? await fetchEprsByPersonForEvaluator(personId as string, currentUserId as string)
+                : await fetchEprsByEvaluator(currentUserId as string)
+        } else if (currentRole === "student") {
+            if (personId !== currentUserId) {
+                return res.status(403).json({
+                    success: false,
+                    error: "Students can only view their own EPRs"
+                })
+            }
+
+            records = await fetchEprsByPerson(currentUserId as string)
+        } else {
+            return res.status(403).json({
+                success: false,
+                error: "Forbidden"
+            })
+        }
 
         res.json({
             success: true,
@@ -59,6 +94,20 @@ export const getEpr = async (req: Request, res: Response) => {
             })
         }
 
+        if (req.user?.role === "student" && record.person_id !== req.user.id) {
+            return res.status(403).json({
+                success: false,
+                error: "Students can only view their own EPRs"
+            })
+        }
+
+        if (req.user?.role === "instructor" && record.evaluator_id !== req.user.id) {
+            return res.status(403).json({
+                success: false,
+                error: "Instructors can only view records they evaluated"
+            })
+        }
+
         res.json({
             success: true,
             data: record
@@ -83,6 +132,32 @@ export const createEprRecord = async (req: Request, res: Response) => {
             return res.status(400).json({
                 success: false,
                 error: "personId, evaluatorId, periodStart and periodEnd are required"
+            })
+        }
+
+        const [person, evaluator] = await Promise.all([
+            fetchUserById(data.personId),
+            fetchUserById(data.evaluatorId)
+        ])
+
+        if (!person) {
+            return res.status(400).json({
+                success: false,
+                error: "personId does not exist"
+            })
+        }
+
+        if (!evaluator) {
+            return res.status(400).json({
+                success: false,
+                error: "evaluatorId does not exist"
+            })
+        }
+
+        if (req.user?.role === "instructor" && data.evaluatorId !== req.user.id) {
+            return res.status(403).json({
+                success: false,
+                error: "Instructors can only create records as themselves"
             })
         }
 
@@ -143,6 +218,28 @@ export const updateEprRecord = async (req: Request, res: Response) => {
         const { id } = req.params
         const data = req.body
 
+        const existingRecord = await fetchEprById(id as string)
+        if (!existingRecord) {
+            return res.status(404).json({
+                success: false,
+                error: "EPR record not found"
+            })
+        }
+
+        if (req.user?.role === "student") {
+            return res.status(403).json({
+                success: false,
+                error: "Students cannot update EPR records"
+            })
+        }
+
+        if (req.user?.role === "instructor" && existingRecord.evaluator_id !== req.user.id) {
+            return res.status(403).json({
+                success: false,
+                error: "Instructors can only update records they evaluated"
+            })
+        }
+
         const ratings = [
             data.overallRating,
             data.technicalSkillsRating,
@@ -191,6 +288,23 @@ export const getEprSummary = async (req: Request, res: Response) => {
     try {
 
         const { personId } = req.params
+
+        if (req.user?.role === "student" && req.user.id !== personId) {
+            return res.status(403).json({
+                success: false,
+                error: "Students can only view their own summary"
+            })
+        }
+
+        if (req.user?.role === "instructor") {
+            const canView = await hasEprsByPersonForEvaluator(personId as string, req.user.id)
+            if (!canView) {
+                return res.status(403).json({
+                    success: false,
+                    error: "Instructors can only view summaries for students they evaluated"
+                })
+            }
+        }
 
         const summary = await fetchEprSummary(personId as string)
 

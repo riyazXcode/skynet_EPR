@@ -2,6 +2,8 @@ export interface EprRecord {
  id: string
  person_id: string
  evaluator_id: string
+ person_name?: string
+ evaluator_name?: string
 
  period_start: string
  period_end: string

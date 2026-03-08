@@ -1,8 +1,14 @@
 import apiClient from "./apiClient"
 
-export const getEprs = async (personId: string) => {
+interface GetEprsParams {
+ personId?: string
+ evaluatorId?: string
+}
 
- const res = await apiClient.get(`/api/epr?personId=${personId}`)
+export const getEprs = async ({ personId, evaluatorId }: GetEprsParams) => {
+
+ const query = personId ? `personId=${personId}` : `evaluatorId=${evaluatorId}`
+ const res = await apiClient.get(`/api/epr?${query}`)
 
  return res.data.data
 

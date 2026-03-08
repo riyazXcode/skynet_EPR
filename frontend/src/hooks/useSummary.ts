@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { getSummary } from "../api/eprApi"
 import { type Summary } from "../types/summary"
 
-export const useSummary = (personId?: string) => {
+export const useSummary = (personId?: string, refreshKey = 0) => {
 
  const [summary, setSummary] = useState<Summary | null>(null)
 
@@ -23,7 +23,7 @@ export const useSummary = (personId?: string) => {
 
   load()
 
- }, [personId])
+ }, [personId, refreshKey])
 
  return summary
 

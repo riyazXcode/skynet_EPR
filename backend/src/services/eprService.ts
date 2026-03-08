@@ -14,10 +14,63 @@ const formatDateLabel = (value: unknown) => {
 
 export const fetchEprsByPerson = async (personId: string) => {
 
- return db("epr_records")
-  .where("person_id", personId)
-  .orderBy("period_start", "desc")
+ return db("epr_records as e")
+  .leftJoin("users as p", "e.person_id", "p.id")
+  .leftJoin("users as ev", "e.evaluator_id", "ev.id")
+  .where("e.person_id", personId)
+  .select(
+   "e.*",
+   db.raw("p.name as person_name"),
+   db.raw("ev.name as evaluator_name")
+  )
+  .orderBy("e.period_start", "desc")
 
+}
+
+export const fetchEprsByEvaluator = async (evaluatorId: string) => {
+
+ return db("epr_records as e")
+  .leftJoin("users as p", "e.person_id", "p.id")
+  .leftJoin("users as ev", "e.evaluator_id", "ev.id")
+  .where("e.evaluator_id", evaluatorId)
+  .select(
+   "e.*",
+   db.raw("p.name as person_name"),
+   db.raw("ev.name as evaluator_name")
+  )
+  .orderBy("e.period_start", "desc")
+
+}
+
+export const fetchEprsByPersonForEvaluator = async (personId: string, evaluatorId: string) => {
+
+ return db("epr_records as e")
+  .leftJoin("users as p", "e.person_id", "p.id")
+  .leftJoin("users as ev", "e.evaluator_id", "ev.id")
+  .where("e.person_id", personId)
+  .andWhere("e.evaluator_id", evaluatorId)
+  .select(
+   "e.*",
+   db.raw("p.name as person_name"),
+   db.raw("ev.name as evaluator_name")
+  )
+  .orderBy("e.period_start", "desc")
+
+}
+
+export const hasEprsByPersonForEvaluator = async (personId: string, evaluatorId: string) => {
+ const record = await db("epr_records")
+  .where("person_id", personId)
+  .andWhere("evaluator_id", evaluatorId)
+  .first("id")
+
+ return Boolean(record)
+}
+
+export const fetchUserById = async (id: string) => {
+ return db("users")
+  .where("id", id)
+  .first("id", "role")
 }
 
 export const fetchEprById = async (id: string) => {
@@ -104,4 +157,3 @@ export const fetchEprSummary = async (personId: string) => {
  }
 
 }
-

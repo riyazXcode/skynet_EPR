@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react"
 import { getEprs } from "../api/eprApi.ts"
 import { type EprRecord } from "../types/epr"
+import { type Person } from "../types/people"
 
-export const useEprs = (personId?: string) => {
+export const useEprs = (personId?: string, role?: Person["role"], refreshKey = 0) => {
 
  const [records, setRecords] = useState<EprRecord[]>([])
  const [loading, setLoading] = useState(false)
 
  useEffect(() => {
 
-  if (!personId) return
+  if (!personId || !role) {
+   setRecords([])
+   return
+  }
 
   const load = async () => {
 
@@ -17,7 +21,9 @@ export const useEprs = (personId?: string) => {
 
    try {
 
-    const data = await getEprs(personId)
+    const data = role === "instructor"
+     ? await getEprs({ evaluatorId: personId })
+     : await getEprs({ personId })
     setRecords(data)
 
    } catch (err) {
@@ -34,7 +40,7 @@ export const useEprs = (personId?: string) => {
 
   load()
 
- }, [personId])
+ }, [personId, role, refreshKey])
 
  return { records, loading }
 

@@ -1,30 +1,26 @@
-import { type EprRecord } from "../../types/epr"
+﻿import { type EprRecord } from "../../types/epr"
 import EprCard from "./EprCard"
 
 interface Props {
  records: EprRecord[]
+ selectedRole?: "student" | "instructor" | "admin"
  onSelect: (r: EprRecord) => void
 }
 
-export default function EprList({ records, onSelect }: Props) {
-
+export default function EprList({ records, selectedRole, onSelect }: Props) {
  if (!records.length) {
-  return <div>No records found</div>
+  return (
+   <div className="rounded-2xl border border-dashed border-sky-200 bg-white p-6 text-sm text-slate-500">
+    No performance records found for this person.
+   </div>
+  )
  }
 
  return (
-
-  <div className="space-y-3">
-
-   {records.map(r => (
-    <EprCard
-     key={r.id}
-     record={r}
-     onSelect={onSelect}
-    />
+  <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+   {records.map((record) => (
+    <EprCard key={record.id} record={record} selectedRole={selectedRole} onSelect={onSelect} />
    ))}
-
   </div>
-
  )
 }
