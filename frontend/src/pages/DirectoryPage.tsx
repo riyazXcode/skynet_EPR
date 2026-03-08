@@ -29,6 +29,8 @@ export default function DirectoryPage({ currentSession, onSwitchUser }: Props) {
  const [sortBy, setSortBy] = useState("period_desc")
  const [showProfileModal, setShowProfileModal] = useState(false)
  const [showPeopleFilterModal, setShowPeopleFilterModal] = useState(false)
+ const [showAdminStudentPicker, setShowAdminStudentPicker] = useState(false)
+ const [targetStudentId, setTargetStudentId] = useState("")
  const [eprRefreshKey, setEprRefreshKey] = useState(0)
 
  const isStudentSession = currentSession.role === "student"
@@ -37,9 +39,15 @@ export default function DirectoryPage({ currentSession, onSwitchUser }: Props) {
  const effectiveRoleFilter = isInstructorSession || isStudentSession ? "student" : roleFilter
 
  const { people, loading, error: peopleError } = usePeople(searchQuery, effectiveRoleFilter as "all" | "student" | "instructor")
+ const { people: adminStudentOptions } = usePeople("", "student")
  const { records, loading: eprLoading } = useEprs(selectedPerson?.id, selectedPerson?.role, eprRefreshKey)
  const summary = useSummary(selectedPerson?.role === "student" ? selectedPerson.id : undefined, eprRefreshKey)
  const defaultEvaluatorId = currentSession.id
+ const students = useMemo(
+  () => (isAdminSession ? adminStudentOptions : people.filter((p) => p.role === "student")),
+  [isAdminSession, adminStudentOptions, people]
+ )
+ const isAdminCreatingForInstructor = isAdminSession && selectedPerson?.role === "instructor"
 
  const visiblePeople = useMemo(() => {
   if (isStudentSession) {
@@ -108,7 +116,7 @@ export default function DirectoryPage({ currentSession, onSwitchUser }: Props) {
      {!isStudentSession && (
      <aside className="glass-panel flex h-full flex-col overflow-hidden border-b border-sky-100/80 p-4 md:p-5 lg:border-b-0 lg:border-r lg:p-6">
       <div className="mb-5 rounded-2xl bg-gradient-to-r from-sky-700 to-sky-500 px-4 py-4 text-white shadow-lg">
-       <div className="text-xl font-bold">AIRMAN</div>
+      <div className="text-xl font-bold italic">AIRMAN</div>
        <div className="text-xs text-sky-100">Academy EPR Console</div>
       </div>
 
@@ -153,17 +161,19 @@ export default function DirectoryPage({ currentSession, onSwitchUser }: Props) {
          <path d="m21 21-4.3-4.3" />
         </svg>
        </button>
-       <button
-        type="button"
-        onClick={() => setShowPeopleFilterModal(true)}
-        className="inline-flex items-center gap-1 rounded-xl border border-sky-100 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-       >
-        <svg className="h-3.5 w-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-         <path d="M3 5h18" />
-         <path d="M6 12h12" />
-         <path d="M10 19h4" />
-        </svg>
-       </button>
+       {isAdminSession && (
+        <button
+         type="button"
+         onClick={() => setShowPeopleFilterModal(true)}
+         className="inline-flex items-center gap-1 rounded-xl border border-sky-100 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+        >
+         <svg className="h-3.5 w-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M3 5h18" />
+          <path d="M6 12h12" />
+          <path d="M10 19h4" />
+         </svg>
+        </button>
+       )}
       </div>
 
       {peopleError && (
@@ -221,8 +231,17 @@ export default function DirectoryPage({ currentSession, onSwitchUser }: Props) {
 
          {(isInstructorSession && selectedPerson.role === "student") ||
          (isAdminSession && selectedPerson.role !== "admin") ? (
-          <button
-            onClick={() => setShowCreate(true)}
+         <button
+            onClick={() => {
+             if (isAdminCreatingForInstructor) {
+              if (!targetStudentId && students.length) {
+               setTargetStudentId(students[0].id)
+              }
+              setShowAdminStudentPicker(true)
+              return
+             }
+             setShowCreate(true)
+            }}
             className="ml-auto inline-flex items-center gap-1 rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-sky-700"
           >
            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -317,14 +336,68 @@ export default function DirectoryPage({ currentSession, onSwitchUser }: Props) {
 
       {showCreate &&
       ((isInstructorSession && selectedPerson?.role === "student") ||
-       (isAdminSession && selectedPerson && selectedPerson.role !== "admin")) && (
+       (isAdminSession &&
+        selectedPerson &&
+        (selectedPerson.role === "student" || (selectedPerson.role === "instructor" && Boolean(targetStudentId))))) && (
        <EprForm
-        personId={selectedPerson.id}
-        evaluatorId={defaultEvaluatorId}
-        roleType={selectedPerson.role}
-        onClose={() => setShowCreate(false)}
+        personId={isAdminCreatingForInstructor ? targetStudentId : selectedPerson.id}
+        evaluatorId={isAdminCreatingForInstructor ? selectedPerson.id : defaultEvaluatorId}
+        roleType={isAdminCreatingForInstructor ? "student" : selectedPerson.role}
+        onClose={() => {
+         setShowCreate(false)
+         if (isAdminCreatingForInstructor) {
+          setTargetStudentId("")
+         }
+        }}
         onCreated={() => setEprRefreshKey((v) => v + 1)}
        />
+      )}
+
+      {showAdminStudentPicker && isAdminCreatingForInstructor && (
+       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-3 backdrop-blur-sm">
+        <div className="w-full max-w-md rounded-2xl border border-sky-100 bg-white p-5 shadow-2xl">
+         <h3 className="text-lg font-semibold">Choose Student for New EPR</h3>
+         <p className="mt-1 text-sm text-slate-500">
+          Evaluator: {selectedPerson?.name}
+         </p>
+
+         <label className="mt-4 block text-sm text-slate-700">
+          <div className="mb-1 font-semibold">Student</div>
+          <select
+           value={targetStudentId}
+           onChange={(e) => setTargetStudentId(e.target.value)}
+           className="w-full rounded-xl border border-sky-100 bg-slate-50 px-3 py-2 outline-none focus:border-sky-300 focus:bg-white"
+          >
+           {students.map((student) => (
+            <option key={student.id} value={student.id}>
+             {student.name}
+            </option>
+           ))}
+          </select>
+         </label>
+
+         <div className="mt-4 flex justify-end gap-2">
+          <button
+           type="button"
+           onClick={() => setShowAdminStudentPicker(false)}
+           className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+          >
+           Cancel
+          </button>
+          <button
+           type="button"
+           disabled={!targetStudentId}
+           onClick={() => {
+            setShowAdminStudentPicker(false)
+            setShowCreate(true)
+           }}
+           className="rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-60"
+          >
+           Continue
+          </button>
+         </div>
+        </div>
+       </div>
       )}
 
       {showProfileModal && (
@@ -368,7 +441,7 @@ export default function DirectoryPage({ currentSession, onSwitchUser }: Props) {
        </div>
       )}
 
-      {showPeopleFilterModal && (
+      {isAdminSession && showPeopleFilterModal && (
        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-3 backdrop-blur-sm">
         <div className="w-full max-w-sm rounded-2xl border border-sky-100 bg-white p-5 shadow-2xl">
          <div className="mb-4 flex items-center gap-2 text-lg font-semibold">

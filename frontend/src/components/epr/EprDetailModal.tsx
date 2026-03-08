@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { updateEpr } from "../../api/eprApi"
+import { generateAiRemark, updateEpr } from "../../api/eprApi"
 import { type EprRecord } from "../../types/epr"
 import { useToast } from "../common/ToastProvider"
 
@@ -24,6 +24,7 @@ const formatDate = (value: string) => {
 export default function EprDetailModal({ record, onClose, onUpdated, readOnly = false }: Props) {
  const [isEditing, setIsEditing] = useState(false)
  const [saving, setSaving] = useState(false)
+ const [aiLoading, setAiLoading] = useState(false)
  const [form, setForm] = useState<EprRecord>({ ...record })
  const [error, setError] = useState("")
  const { showToast } = useToast()
@@ -56,11 +57,36 @@ export default function EprDetailModal({ record, onClose, onUpdated, readOnly = 
   }
  }
 
+ const handleAiAssist = async () => {
+  setAiLoading(true)
+
+  try {
+   const result = await generateAiRemark({
+    overallRating: form.overall_rating,
+    technicalSkillsRating: form.technical_skills_rating,
+    nonTechnicalSkillsRating: form.non_technical_skills_rating
+   })
+
+   setForm((prev) => ({
+    ...prev,
+    remarks: result.suggestedRemarks
+   }))
+   showToast("Suggested remarks generated")
+  } catch {
+   showToast("Failed to generate suggested remarks", "error")
+  } finally {
+   setAiLoading(false)
+  }
+ }
+
  return (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-3 backdrop-blur-sm">
    <div className="w-full max-w-2xl rounded-3xl border border-sky-100 bg-white p-5 shadow-2xl md:p-6">
-    <div className="mb-4 flex items-center justify-between">
-     <h2 className="text-2xl font-bold">EPR Details</h2>
+   <div className="mb-4 flex items-center justify-between">
+     <div>
+      <h2 className="text-2xl font-bold">{record.person_name || "Student"}</h2>
+      <div className="text-sm text-slate-500">EPR Details</div>
+     </div>
      <button onClick={onClose} className="rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-600 hover:bg-slate-50">
       Close
      </button>
@@ -141,7 +167,19 @@ export default function EprDetailModal({ record, onClose, onUpdated, readOnly = 
      </div>
 
      <div>
-      <div className="mb-1 text-sm font-semibold">Remarks</div>
+      <div className="mb-1 flex items-center justify-between text-sm font-semibold">
+       <span>Remarks</span>
+       {isEditing && (
+        <button
+         type="button"
+         onClick={handleAiAssist}
+         disabled={aiLoading}
+         className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 transition hover:bg-sky-100 disabled:opacity-60"
+        >
+         {aiLoading ? "Generating..." : "Generate Suggested Remarks"}
+        </button>
+       )}
+      </div>
       {isEditing ? (
        <textarea
         rows={4}
