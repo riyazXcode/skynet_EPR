@@ -42,6 +42,8 @@ export const patchEpr = async (id: string, data: any) => {
  const updated = await db("epr_records")
   .where("id", id)
   .update({
+   period_start: data.periodStart,
+   period_end: data.periodEnd,
    overall_rating: data.overallRating,
    technical_skills_rating: data.technicalSkillsRating,
    non_technical_skills_rating: data.nonTechnicalSkillsRating,
@@ -80,9 +82,10 @@ export const fetchEprSummary = async (personId: string) => {
  return {
   ...aggregates,
   lastThreePeriods: lastThree.map(r => ({
-   periodLabel: `${r.period_start} → ${r.period_end}`,
+   periodLabel: `${r.period_start} -> ${r.period_end}`,
    overallRating: r.overallRating
   }))
  }
 
 }
+

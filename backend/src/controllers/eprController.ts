@@ -8,12 +8,16 @@ import {
 } from "../services/eprService"
 import { validateRating } from "../utils/validation"
 
+const hasInvalidRating = (rating: unknown) => {
+    return typeof rating !== "number" || !validateRating(rating)
+}
+
 export const listEprs = async (req: Request, res: Response) => {
 
     try {
 
         const { personId } = req.query
-        if (req.user?.role === "student" && req.user.id !== req.body.personId) {
+        if (req.user?.role === "student" && req.user.id !== personId) {
             return res.status(403).json({ error: "Students can only view their own EPRs" })
         }
         if (!personId) {
@@ -46,6 +50,12 @@ export const getEpr = async (req: Request, res: Response) => {
         const { id } = req.params
 
         const record = await fetchEprById(id as string)
+        if (!record) {
+            return res.status(404).json({
+                success: false,
+                error: "EPR record not found"
+            })
+        }
 
         res.json({
             success: true,
@@ -67,14 +77,21 @@ export const createEprRecord = async (req: Request, res: Response) => {
     try {
 
         const data = req.body
-        if (data.overallRating < 1 || data.overallRating > 5) {
+        const ratings = [
+            data.overallRating,
+            data.technicalSkillsRating,
+            data.nonTechnicalSkillsRating
+        ]
+        if (ratings.some(hasInvalidRating)) {
             return res.status(400).json({
-                error: "Rating must be between 1 and 5"
+                success: false,
+                error: "Ratings must be between 1 and 5"
             })
         }
 
         if (data.periodEnd < data.periodStart) {
             return res.status(400).json({
+                success: false,
                 error: "Invalid period range"
             })
         }
@@ -101,8 +118,34 @@ export const updateEprRecord = async (req: Request, res: Response) => {
     try {
 
         const { id } = req.params
+        const data = req.body
 
-        const updated = await patchEpr(id as string, req.body)
+        const ratings = [
+            data.overallRating,
+            data.technicalSkillsRating,
+            data.nonTechnicalSkillsRating
+        ]
+        if (ratings.some(hasInvalidRating)) {
+            return res.status(400).json({
+                success: false,
+                error: "Ratings must be between 1 and 5"
+            })
+        }
+
+        if (data.periodEnd < data.periodStart) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid period range"
+            })
+        }
+
+        const updated = await patchEpr(id as string, data)
+        if (!updated) {
+            return res.status(404).json({
+                success: false,
+                error: "EPR record not found"
+            })
+        }
 
         res.json({
             success: true,
@@ -155,6 +198,25 @@ export const generateEprRemarks = async (req: Request, res: Response) => {
             nonTechnicalSkillsRating
         } = req.body
 
+        if (
+            overallRating == null ||
+            technicalSkillsRating == null ||
+            nonTechnicalSkillsRating == null
+        ) {
+            return res.status(400).json({
+                success: false,
+                error: "Missing rating fields"
+            })
+        }
+
+        const ratings = [overallRating, technicalSkillsRating, nonTechnicalSkillsRating]
+        if (ratings.some(hasInvalidRating)) {
+            return res.status(400).json({
+                success: false,
+                error: "Ratings must be between 1 and 5"
+            })
+        }
+
         const avg =
             (overallRating + technicalSkillsRating + nonTechnicalSkillsRating) / 3
 
@@ -188,12 +250,6 @@ export const generateEprRemarks = async (req: Request, res: Response) => {
         })
 
     } catch {
-        if (!validateRating(req.body.overallRating)) {
-            return res.status(400).json({
-                success: false,
-                error: "Rating must be between 1 and 5"
-            })
-        }
         res.status(500).json({
             success: false,
             error: "Failed to generate AI remarks"

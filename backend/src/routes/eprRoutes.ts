@@ -18,7 +18,6 @@ router.get("/summary/:personId", getEprSummary)
 
 router.get(
  "/",
- mockAuth,
  listEprs
 )
 

@@ -6,7 +6,7 @@ export const fetchPeople = async (role?: string, search?: string) => {
   .leftJoin("enrollments", "users.id", "enrollments.student_id")
   .leftJoin("courses", "enrollments.course_id", "courses.id")
   .leftJoin("epr_records", "users.id", "epr_records.evaluator_id")
-  .groupBy("users.id", "courses.name", "enrollments.status")
+  .groupBy("users.id", "users.name", "users.email", "users.role")
 
  if (role) {
   query = query.where("users.role", role)
@@ -24,9 +24,9 @@ export const fetchPeople = async (role?: string, search?: string) => {
   "users.name",
   "users.email",
   "users.role",
-  db.raw("courses.name as course_name"),
-  db.raw("enrollments.status as enrollment_status"),
-  db.raw("COUNT(epr_records.id) as total_eprs_written")
+  db.raw("MAX(courses.name) as course_name"),
+  db.raw("MAX(enrollments.status) as enrollment_status"),
+  db.raw("COUNT(DISTINCT epr_records.id) as total_eprs_written")
  )
 
  return result
