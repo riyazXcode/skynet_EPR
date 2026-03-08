@@ -4,10 +4,13 @@ import {
  getEpr,
  createEprRecord,
  updateEprRecord,
- getEprSummary
+ getEprSummary,
+ generateEprRemarks
 } from "../controllers/eprController"
 
 const router = Router()
+
+router.post("/assist", generateEprRemarks)
 
 router.get("/summary/:personId", getEprSummary)
 

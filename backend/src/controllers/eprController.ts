@@ -4,7 +4,7 @@ import {
  fetchEprById,
  insertEpr,
  patchEpr,
- fetchEprSummary
+ fetchEprSummary,
 } from "../services/eprService"
 
 export const listEprs = async (req: Request, res: Response) => {
@@ -136,6 +136,60 @@ export const getEprSummary = async (req: Request, res: Response) => {
   res.status(500).json({
    success: false,
    error: "Failed to generate summary"
+  })
+
+ }
+
+}
+
+
+export const generateEprRemarks = async (req: Request, res: Response) => {
+
+ try {
+
+  const {
+   overallRating,
+   technicalSkillsRating,
+   nonTechnicalSkillsRating
+  } = req.body
+
+  const avg =
+   (overallRating + technicalSkillsRating + nonTechnicalSkillsRating) / 3
+
+  let remark = ""
+
+  if (avg >= 4.5) {
+   remark =
+    "The student demonstrates excellent technical proficiency, strong situational awareness, and disciplined cockpit procedures."
+  }
+
+  else if (avg >= 3.5) {
+   remark =
+    "The student shows solid technical fundamentals and consistent progress but should continue refining communication and checklist discipline."
+  }
+
+  else if (avg >= 2.5) {
+   remark =
+    "The student demonstrates developing skills but requires additional practice to improve technical accuracy and cockpit coordination."
+  }
+
+  else {
+   remark =
+    "The student requires focused improvement in both technical proficiency and non-technical skills such as communication and situational awareness."
+  }
+
+  res.json({
+   success: true,
+   data: {
+    suggestedRemarks: remark
+   }
+  })
+
+ } catch {
+
+  res.status(500).json({
+   success: false,
+   error: "Failed to generate AI remarks"
   })
 
  }
