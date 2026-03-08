@@ -3,7 +3,8 @@ import {
  fetchEprsByPerson,
  fetchEprById,
  insertEpr,
- patchEpr
+ patchEpr,
+ fetchEprSummary
 } from "../services/eprService"
 
 export const listEprs = async (req: Request, res: Response) => {
@@ -114,4 +115,29 @@ export const updateEprRecord = async (req: Request, res: Response) => {
   })
 
  }
+}
+
+
+export const getEprSummary = async (req: Request, res: Response) => {
+
+ try {
+
+  const { personId } = req.params
+
+  const summary = await fetchEprSummary(personId as string)
+
+  res.json({
+   success: true,
+   data: summary
+  })
+
+ } catch (error) {
+
+  res.status(500).json({
+   success: false,
+   error: "Failed to generate summary"
+  })
+
+ }
+
 }

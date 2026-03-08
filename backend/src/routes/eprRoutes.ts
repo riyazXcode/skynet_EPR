@@ -3,10 +3,13 @@ import {
  listEprs,
  getEpr,
  createEprRecord,
- updateEprRecord
+ updateEprRecord,
+ getEprSummary
 } from "../controllers/eprController"
 
 const router = Router()
+
+router.get("/summary/:personId", getEprSummary)
 
 router.get("/", listEprs)
 

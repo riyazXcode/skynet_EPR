@@ -53,3 +53,36 @@ export const patchEpr = async (id: string, data: any) => {
  return updated[0]
 
 }
+
+
+export const fetchEprSummary = async (personId: string) => {
+
+ const aggregates = await db("epr_records")
+  .where("person_id", personId)
+  .select(
+    db.raw("ROUND(AVG(overall_rating), 2) as averageOverallRating"),
+    db.raw("ROUND(AVG(technical_skills_rating), 2) as averageTechnicalRating"),
+    db.raw("ROUND(AVG(non_technical_skills_rating), 2) as averageNonTechnicalRating"),
+    db.raw("COUNT(id) as eprCount")
+  )
+  .first()
+
+ const lastThree = await db("epr_records")
+  .where("person_id", personId)
+  .orderBy("period_start", "desc")
+  .limit(3)
+  .select(
+   db.raw("period_start"),
+   db.raw("period_end"),
+   db.raw("overall_rating as overallRating")
+  )
+
+ return {
+  ...aggregates,
+  lastThreePeriods: lastThree.map(r => ({
+   periodLabel: `${r.period_start} → ${r.period_end}`,
+   overallRating: r.overallRating
+  }))
+ }
+
+}
