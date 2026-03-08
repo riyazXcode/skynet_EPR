@@ -116,8 +116,8 @@ export default function DirectoryPage({ currentSession, onSwitchUser }: Props) {
      {!isStudentSession && (
      <aside className="glass-panel flex h-full flex-col overflow-hidden border-b border-sky-100/80 p-4 md:p-5 lg:border-b-0 lg:border-r lg:p-6">
       <div className="mb-5 rounded-2xl bg-gradient-to-r from-sky-700 to-sky-500 px-4 py-4 text-white shadow-lg">
-      <div className="text-xl font-bold italic">AIRMAN</div>
-       <div className="text-xs text-sky-100">Academy EPR Console</div>
+      <div className="text-xl font-bold italic">AIRMAN <span className="font-normal">Skynet</span></div>
+       <div className="text-xs text-sky-100">EPR Console</div>
       </div>
 
       <div className="mb-3 flex items-center gap-2 px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
